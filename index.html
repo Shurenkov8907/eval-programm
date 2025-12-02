@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Железнодорожный калькулятор</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Ваши существующие стили остаются без изменений */
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --warning: #ffc107;
+      --dark: #212529;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --border-radius: 10px;
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1800px;
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    .rail-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+
+    .card-header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    .card-header p {
+      opacity: 0.9;
+    }
+
+    .card-body {
+      padding: 25px;
+    }
+
+    .fieldset {
+      border: 1px solid #e9ecef;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .fieldset legend {
+      font-weight: 600;
+      color: var(--primary);
+      padding: 0 10px;
+      width: auto;
+    }
+
+    .fieldset legend i {
+      margin-right: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    .form-group label i {
+      margin-right: 8px;
+      color: var(--primary);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+
+    .form-control.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .kilometer-inputs,
+    .additional-inputs,
+    .bridge-inputs,
+    .curved-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .bridge-inputs,
+    .curved-inputs {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    @media (max-width: 768px) {
+      .kilometer-inputs,
+      .additional-inputs,
+      .bridge-inputs,
+      .curved-inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: "\f078";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+      pointer-events: none;
+    }
+
+    .select-wrapper select {
+      appearance: none;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: var(--transition);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn i {
+      margin-right: 8px;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .toggle-btn {
+      background: var(--gray);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .toggle-btn:hover {
+      background: #5a6268;
+    }
+
+    .result {
+      background: linear-gradient(135deg, #4cc9f0, #4361ee);
+      color: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-top: 25px;
+    }
+
+    .result h3 {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .result h3 i {
+      margin-right: 10px;
+    }
+
+    .calculation-steps {
+      background: var(--light);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-top: 25px;
+    }
+
+    .calculation-steps h4 {
+      color: var(--primary);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .calculation-steps h4 i {
+      margin-right: 10px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px 0;
+    }
+
+    .step-number {
+      background: var(--primary);
+      color: white;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      font-size: 0.8rem;
+    }
+
+    .length-result {
+      background: #e9f7fe;
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin-top: 10px;
+    }
+
+    .length-result p {
+      margin: 0;
+      color: var(--dark);
+      font-weight: 500;
+    }
+
+    .meter-unit {
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin-left: 5px;
+    }
+
+    .unit-info {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 3px;
+    }
+
+    .shpal-details {
+      background: #e8f5e8;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 10px;
+      border-left: 4px solid #28a745;
+    }
+
+    .shpal-details h5 {
+      color: #155724;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .shpal-details h5 i {
+      margin-right: 8px;
+    }
+
+    .shpal-details p {
+      margin: 5px 0;
+      color: #155724;
+    }
+
+    .formula-box {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+
+    .formula-title {
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 8px;
+    }
+
+    .formula {
+      font-family: "Courier New", monospace;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      border-left: 4px solid var(--warning);
+    }
+
+    .details-section {
+      display: none;
+      margin-top: 15px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .checkbox-group label {
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    .table-section {
+      margin-top: 30px;
+    }
+
+    .table-section h3 {
+      color: var(--primary);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .table-section h3 i {
+      margin-right: 10px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: center;
+      border: 3px solid #000;
+    }
+    
+    .results-table th,
+    .results-table td {
+      border: 2px solid #000;
+      padding: 4px;
+      vertical-align: middle;
+      width: 50px;
+    }
+    
+    .results-table th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    
+    .sub-header {
+      background-color: #e0e0e0;
+    }
+    
+    .rotate {
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      width: 20px;
+    }
+
+    .progress-info {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e9ecef;
+      border-radius: 10px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      transition: width 0.3s ease;
+    }
+
+    .kilometer-summary {
+      background: #e9f7fe;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+
+    .kilometer-summary h5 {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .vs-notice {
+      background: #e8f5e8;
+      border: 1px solid #28a745;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin-top: 5px;
+      font-size: 0.8rem;
+      color: #155724;
+    }
+
+    .to-notice {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin-top: 5px;
+      font-size: 0.8rem;
+      color: #856404;
+    }
+
+    /* Новый стиль для кнопки вывода результатов */
+    .results-btn-container {
+      position: sticky;
+      bottom: 20px;
+      z-index: 100;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .results-btn-always {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .results-btn-always:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    /* Стили для секции кривого участка */
+    .curved-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      border-left: 4px solid var(--warning);
+    }
+
+    .section-breakdown {
+      background: #e9f7fe;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+
+    .section-breakdown h5 {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-train rail-icon"></i>
+        <h1>Расчёт параметров пути</h1>
+        <p>Калькулятор</p>
+      </div>
+
+      <div class="card-body">
+        <form id="calculationForm">
+          <!-- Секция участка пути -->
+          <fieldset class="fieldset">
+            <legend><i class="fas fa-route"></i> Участок пути</legend>
+
+            <div class="form-group">
+              <label for="kilometer"><i class="fas fa-map-marker-alt"></i> Номер километража:</label>
+              <input
+                type="number"
+                id="kilometer"
+                name="kilometer"
+                class="form-control"
+                min="0"
+                step="0.001"
+                required
+              />
+            </div>
+
+            <div class="kilometer-inputs">
+              <div class="form-group">
+                <label for="start_point"><i class="fas fa-flag"></i> Начало участка (м):</label>
+                <input
+                  type="number"
+                  id="start_point"
+                  name="start_point"
+                  class="form-control"
+                  min="0"
+                  max="999"
+                  step="1"
+                  placeholder="0-999 м"
+                />
+                <span class="meter-unit">метров</span>
+                <div class="error-message" id="start_point_error">
+                  Начало участка должно быть от 0 до 999 метров
+                </div>
+                <div class="unit-info">Введите расстояние в метрах (0-999)</div>
+              </div>
+
+              <div class="form-group">
+                <label for="end_point"><i class="fas fa-flag-checkered"></i> Конец участка (м):</label>
+                <input
+                  type="number"
+                  id="end_point"
+                  name="end_point"
+                  class="form-control"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  placeholder="0-1000 м"
+                />
+                <span class="meter-unit">метров</span>
+                <div class="error-message" id="end_point_error">
+                  Конец участка должен быть от 0 до 1000 метров
+                </div>
+                <div class="unit-info">Введите расстояние в метрах (0-1000)</div>
+              </div>
+            </div>
+
+            <div class="length-result" id="length_result" style="display: none">
+              <p>
+                Протяженность участка: <span id="length_value">0</span> м =
+                <span id="length_value_km">0</span> км
+              </p>
+            </div>
+          </fieldset>
+
+          <!-- Секция конструкции пути -->
+          <fieldset class="fieldset">
+            <legend><i class="fas fa-route"></i> Конструкция пути</legend>
+
+            <div class="form-group">
+              <label for="path_type"><i class="fas fa-road"></i> Тип пути:</label>
+              <div class="select-wrapper">
+                <select id="path_type" name="path_type" class="form-control">
+                  <option value="besstykovoy">Бесстыковой</option>
+                  <option value="zvenevoy">Звеньевой</option>
+                  <option value="inventarnye">Инвентарные</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="epure_type"><i class="fas fa-layer-group"></i> Эпюр укладки:</label>
+              <div class="select-wrapper">
+                <select id="epure_type" name="epure_type" class="form-control">
+                  <option value="1840_2000">1840/2000</option>
+                  <option value="1600_1840">1600/1840</option>
+                </select>
+              </div>
+              <div class="unit-info">Эпюра указывается в шпалах на километр</div>
+            </div>
+
+            <div class="form-group">
+              <label for="rail_type"><i class="fas fa-train"></i> Тип рельсов:</label>
+              <div class="select-wrapper">
+                <select id="rail_type" name="rail_type" class="form-control">
+                  <option value="p65">P65</option>
+                  <option value="p50">P50</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="section_type"><i class="fas fa-chart-line"></i> Тип участка:</label>
+              <div class="select-wrapper">
+                <select id="section_type" name="section_type" class="form-control">
+                  <option value="straight">Прямой</option>
+                  <option value="curved">Кривой</option>
+                  <option value="mixed">Комбинированный (прямой + кривой)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Поля для радиуса кривой -->
+            <div class="form-group radius-input" id="radius_group">
+              <label for="radius_input"><i class="fas fa-ruler-combined"></i> Радиус кривой R (м):</label>
+              <input
+                type="number"
+                id="radius_input"
+                name="radius_input"
+                class="form-control"
+                min="1"
+              />
+              <div class="unit-info">Введите радиус в метрах</div>
+            </div>
+
+            <!-- Поля для кривого участка (только для комбинированного типа) -->
+            <div class="curved-section" id="curved_section_group" style="display: none;">
+              <h5><i class="fas fa-route"></i> Кривой участок</h5>
+              <div class="curved-inputs">
+                <div class="form-group">
+                  <label for="curved_start"><i class="fas fa-flag"></i> Начало кривого участка (м):</label>
+                  <input
+                    type="number"
+                    id="curved_start"
+                    name="curved_start"
+                    class="form-control"
+                    min="0"
+                    max="999"
+                    step="1"
+                    placeholder="0-999 м"
+                  />
+                  <div class="unit-info">Введите начало кривого участка в метрах</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="curved_end"><i class="fas fa-flag-checkered"></i> Конец кривого участка (м):</label>
+                  <input
+                    type="number"
+                    id="curved_end"
+                    name="curved_end"
+                    class="form-control"
+                    min="0"
+                    max="1000"
+                    step="1"
+                    placeholder="0-1000 м"
+                  />
+                  <div class="unit-info">Введите конец кривого участка в метрах</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="curved_length_result"><i class="fas fa-ruler"></i> Длина кривого участка:</label>
+                  <input
+                    type="text"
+                    id="curved_length_result"
+                    name="curved_length_result"
+                    class="form-control"
+                    readonly
+                  />
+                  <div class="unit-info">Длина кривого участка рассчитывается автоматически</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="additional-inputs">
+              <div class="form-group">
+                <label for="switch_count"><i class="fas fa-exchange-alt"></i> Количество стрелочных переводов:</label>
+                <input
+                  type="number"
+                  id="switch_count"
+                  name="switch_count"
+                  class="form-control"
+                  min="0"
+                  value="0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="bridge_type"><i class="fas fa-bridge"></i> Тип моста:</label>
+                <div class="select-wrapper">
+                  <select id="bridge_type" name="bridge_type" class="form-control">
+                    <option value="none">Нет моста</option>
+                    <option value="B">Б</option>
+                    <option value="BB">ББ</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Поля для ввода начала и конца моста -->
+            <div class="bridge-inputs" id="bridge_inputs_group" style="display: none;">
+              <div class="form-group">
+                <label for="bridge_start"><i class="fas fa-flag"></i> Начало моста (м):</label>
+                <input
+                  type="number"
+                  id="bridge_start"
+                  name="bridge_start"
+                  class="form-control"
+                  min="0"
+                  max="999"
+                  step="1"
+                  placeholder="0-999 м"
+                />
+                <div class="unit-info">Введите начало моста в метрах</div>
+              </div>
+
+              <div class="form-group">
+                <label for="bridge_end"><i class="fas fa-flag-checkered"></i> Конец моста (м):</label>
+                <input
+                  type="number"
+                  id="bridge_end"
+                  name="bridge_end"
+                  class="form-control"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  placeholder="0-1000 м"
+                />
+                <div class="unit-info">Введите конец моста в метрах</div>
+              </div>
+
+              <div class="form-group">
+                <label for="bridge_length_result"><i class="fas fa-ruler"></i> Длина моста:</label>
+                <input
+                  type="text"
+                  id="bridge_length_result"
+                  name="bridge_length_result"
+                  class="form-control"
+                  readonly
+                />
+                <div class="unit-info">Длина моста рассчитывается автоматически</div>
+              </div>
+            </div>
+
+            <!-- Уравнительные пролеты -->
+            <div class="form-group">
+              <label for="equalizing_spans"><i class="fas fa-ruler"></i> Протяженность уравнительных пролетов (м):</label>
+              <input
+                type="number"
+                id="equalizing_spans"
+                name="equalizing_spans"
+                class="form-control"
+                min="0"
+                value="0"
+              />
+              <div class="unit-info">Введите протяженность в метрах</div>
+            </div>
+
+            <div class="form-group">
+              <label for="rail_material"><i class="fas fa-cogs"></i> Материал скрепления:</label>
+              <div class="select-wrapper">
+                <select id="rail_material" name="rail_material" class="form-control">
+                  <option value="kb">КБ (железобетонные)</option>
+                  <option value="sb">СБ (железобетонные)</option>
+                  <option value="do">ДО (деревянные)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="vn_vs_choice"><i class="fas fa-cogs"></i> Выбор ВН / ВС:</label>
+              <div class="select-wrapper">
+                <select id="vn_vs_choice" name="vn_vs_choice" class="form-control">
+                  <option value="vn">ВН</option>
+                  <option value="vs">ВС (старые)</option>
+                </select>
+              </div>
+              <div class="vs-notice" id="vs_notice" style="display: none;">
+                При выборе ВС данные будут автоматически записаны в столбец "из них старогодные"
+              </div>
+            </div>
+
+            <!-- Галочка ТО -->
+            <div class="checkbox-group">
+              <input type="checkbox" id="to_checkbox" name="to_checkbox">
+              <label for="to_checkbox">ТО</label>
+            </div>
+            <div class="to-notice" id="to_notice">
+              При включенной галочке "ТО" данные НЕ будут записаны в столбец "из них нетермоупрочненные"
+            </div>
+
+            <div class="form-group">
+              <label for="year_input"><i class="fas fa-calendar-alt"></i> Введите год:</label>
+              <input
+                type="number"
+                id="year_input"
+                name="year_input"
+                class="form-control"
+                required
+                min="1900"
+                max="2025"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="delta_t"><i class="fas fa-calculator"></i> Δt = 2025 − год + 1:</label>
+              <input
+                type="text"
+                id="delta_t"
+                name="delta_t"
+                class="form-control"
+                readonly
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="T_value"><i class="fas fa-tachometer-alt"></i> T (результат):</label>
+              <input
+                type="text"
+                id="T_value"
+                name="T_value"
+                class="form-control"
+                readonly
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="U_value"><i class="fas fa-calculator"></i> U (результат):</label>
+              <input
+                type="text"
+                id="U_value"
+                name="U_value"
+                class="form-control"
+                readonly
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="shpal_count"><i class="fas fa-cubes"></i> Количество шпал (результат):</label>
+              <input
+                type="text"
+                id="shpal_count"
+                name="shpal_count"
+                class="form-control"
+                readonly
+              />
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn">
+            <i class="fas fa-calculator"></i> Рассчитать и добавить в таблицу
+          </button>
+        </form>
+
+        <!-- Кнопка вывода результатов - всегда доступна -->
+        <div class="results-btn-container">
+          <button id="show-results-always" class="results-btn-always">
+            <i class="fas fa-table"></i> Вывести результаты для текущего километража
+          </button>
+        </div>
+
+        <!-- Прогресс заполнения километража -->
+        <div id="progress-section" class="progress-info" style="display: none;">
+          <h4><i class="fas fa-chart-line"></i> Прогресс заполнения километража</h4>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <p>Текущий километраж: <span id="current-kilometer">0</span> м / 1000 м</p>
+        </div>
+
+        <!-- Сводка по километражу -->
+        <div id="kilometer-summary" class="kilometer-summary" style="display: none;">
+          <h5><i class="fas fa-info-circle"></i> Сводка по километражу <span id="summary-kilometer"></span></h5>
+          <div id="summary-content"></div>
+        </div>
+
+        <!-- Результаты расчета -->
+        <div id="result" class="result" style="display: none">
+          <h3><i class="fas fa-clipboard-check"></i> Результаты расчёта</h3>
+          <div id="result-content"></div>
+        </div>
+
+        <!-- Секция с таблицей результатов -->
+        <div class="table-section">
+          <h3><i class="fas fa-table"></i> Сводная таблица результатов</h3>
+          <div class="table-container">
+            <table class="results-table" border="3">
+              <tr>
+                <td rowspan="3">№ км</td>
+                <td colspan="12">Бесстыковой путь</td>
+                <td colspan="12">Звеньевой путь</td>
+                <td rowspan="3">Протяженность первой укладки c T>350 млн т брутто</td>
+                <td rowspan="3">Итого (показатели,в сумма дающие протяженность км)</td>
+              </tr>
+              <tr>
+                <td colspan="10">Рельсы</td>
+                <td rowspan="5">из них<br>протяженность<br>уравнительных<br>пролетов, км</td>
+                <td rowspan="5">из них<br>старогодные, км</td>
+                
+                <td colspan="10">Рельсы</td>
+                <td rowspan="5">из них<br>нетермоупрочненные<br>км</td>
+                <td rowspan="5">из них<br>старогодные, км</td>
+              </tr>
+              <tr>
+                <td colspan="5">P65</td>
+                <td colspan="5">P50</td>
+                <td colspan="5">P65</td>
+                <td colspan="5">P50</td>
+              </tr>
+              <tbody id="results-table-body">
+                <!-- Данные будут добавляться сюда -->
+              </tbody>
+              <tfoot id="results-table-footer">
+                <!-- Итоги будут добавляться сюда -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Новая таблица -->
+        <div class="table-section">
+          <h3><i class="fas fa-table"></i> Дополнительная таблица результатов</h3>
+          <div class="table-container">
+            <table class="results-table" border="3">
+              <tr>
+                <td rowspan="3">№ км</td>
+                <td colspan="12">Бесстыковой путь</td>
+                <td colspan="12">Звеньевой путь</td>
+                <td rowspan="3">Протяженность <br>криволинейных <br>участков P>600 м, км</td>
+                <td rowspan="3">Протяженность<br> забалластированных<br> участков с толщиной <br>балласта < 30 см,км</td>
+              </tr>
+              <tr>
+                <td colspan="10">Шпалы, шт</td>
+                <td rowspan="5">из них<br>скреплением<br>СБ, км
+                <td rowspan="5">Переводные<br>брусья,шт</td>
+                
+                <td colspan="10">Шпалы, шт</td>
+                <td rowspan="5">из них<br>скреплением<br>СБ, км
+                <td rowspan="5">Переводные<br>брусья,шт</td>
+              </tr>
+              <tr>
+                <td colspan="5">дер</td>
+                <td colspan="5">жб</td>
+                <td colspan="5">дер</td>
+                <td colspan="5">жб</td>
+              </tr>
+              <tbody id="results-table-body-2">
+                <!-- Данные будут добавляться сюда -->
+              </tbody>
+              <tfoot id="results-table-footer-2">
+                <!-- Итоги будут добавляться сюда -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Кнопка и секция с формулами -->
+        <button class="toggle-btn" onclick="toggleFormulas()">
+          <i class="fas fa-calculator"></i> Показать формулы расчета шпал
+        </button>
+
+        <div id="formulas-section" class="details-section">
+          <div class="calculation-steps">
+            <h4><i class="fas fa-calculator"></i> Формулы расчета количества шпал</h4>
+
+            <div class="formula-box">
+              <div class="formula-title">Основная формула расчета шпал:</div>
+              <div class="formula">N = Math.ceil((L × E) / 1000)</div>
+              <p>
+                где:<br />
+                N - количество шпал (округляется в большую сторону)<br />
+                L - протяженность участка (м)<br />
+                E - эпюра шпал (шт/км)
+              </p>
+            </div>
+
+            <div class="formula-box">
+              <div class="formula-title">Формула расчета мостовых брусьев:</div>
+              <div class="formula">N_мост = Math.ceil((L_мост × 2000) / 1000)</div>
+              <p>
+                где:<br />
+                N_мост - количество мостовых брусьев (округляется в большую сторону)<br />
+                L_мост - протяженность моста типа Б или ББ (м)<br />
+                E - всегда 2000 шт/км для мостов
+              </p>
+            </div>
+
+            <div class="formula-box">
+              <div class="formula-title">Формула расчета переводных брусьев:</div>
+              <div class="formula">
+                • Р65 + ЖБ (КБ/СБ) = 92 шпалы<br />
+                • Р65 + ДО = 90 шпал<br />
+                • Р50 = 87 шпал
+              </div>
+              <p>
+                где:<br />
+                N_перевод - количество шпал на переводных брусьях<br />
+                N_перевод = количество стрелочных переводов × K
+              </p>
+            </div>
+
+            <div class="step">
+              <span class="step-number">1</span>
+              <span>Расчет основных шпал N = Math.ceil((L × E) / 1000)</span>
+            </div>
+            <div class="step">
+              <span class="step-number">2</span>
+              <span>Расчет мостовых брусьев (для мостов типа Б и ББ) с эпюрой 2000</span>
+            </div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <span>Расчет переводных брусьев по условиям</span>
+            </div>
+            <div class="step">
+              <span class="step-number">4</span>
+              <span>Распределение по типам материала (ЖБ/деревянные)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Глобальные переменные для хранения данных
+    const kilometerData = {};
+    const G = 17.58; // Константа для расчетов
+
+    // Функция для переключения отображения формул
+    function toggleFormulas() {
+      const section = document.getElementById("formulas-section");
+      const btn = document.querySelector(".toggle-btn");
+      if (section.style.display === "block") {
+        section.style.display = "none";
+        btn.innerHTML = '<i class="fas fa-calculator"></i> Показать формулы расчета шпал';
+      } else {
+        section.style.display = "block";
+        btn.innerHTML = '<i class="fas fa-calculator"></i> Скрыть формулы расчета шпал';
+      }
+    }
+
+    // Функция для расчета длины стрелочных переводов
+    function calculateSwitchLength(switchCount, railType) {
+      const count = parseInt(switchCount) || 0;
+      const singleLength = railType === "p65" ? 45.9 : 46.1;
+      return count * singleLength;
+    }
+
+    // Функция для расчета эффективной длины (без мостов и стрелочных переводов)
+    function calculateEffectiveLength(totalLength, bridgeLength, switchLength) {
+      return totalLength - bridgeLength - switchLength;
+    }
+
+    // Функция для управления отображением полей кривого участка
+    function toggleCurvedFields() {
+      const sectionType = document.getElementById("section_type");
+      const curvedSectionGroup = document.getElementById("curved_section_group");
+      
+      if (sectionType.value === "mixed") {
+        curvedSectionGroup.style.display = "block";
+      } else {
+        curvedSectionGroup.style.display = "none";
+        document.getElementById("curved_start").value = "";
+        document.getElementById("curved_end").value = "";
+        document.getElementById("curved_length_result").value = "";
+      }
+    }
+
+    // Функция для расчета длины кривого участка
+    function calculateCurvedLength() {
+      const curvedStart = document.getElementById("curved_start");
+      const curvedEnd = document.getElementById("curved_end");
+      const curvedLengthResult = document.getElementById("curved_length_result");
+      
+      const start = parseFloat(curvedStart.value);
+      const end = parseFloat(curvedEnd.value);
+
+      if (!isNaN(start) && !isNaN(end) && end >= start) {
+        const lengthMeters = end - start;
+        curvedLengthResult.value = `${lengthMeters.toFixed(0)} м = ${(lengthMeters / 1000).toFixed(3)} км`;
+      } else {
+        curvedLengthResult.value = "";
+      }
+    }
+
+    // Функция для валидации кривого участка
+    function validateCurvedSection() {
+      const sectionType = document.getElementById("section_type");
+      const curvedStart = document.getElementById("curved_start");
+      const curvedEnd = document.getElementById("curved_end");
+      const startPoint = document.getElementById("start_point");
+      const endPoint = document.getElementById("end_point");
+      
+      if (sectionType.value !== "mixed") return true;
+
+      const start = parseFloat(startPoint.value);
+      const end = parseFloat(endPoint.value);
+      const curvedStartVal = parseFloat(curvedStart.value);
+      const curvedEndVal = parseFloat(curvedEnd.value);
+
+      // Проверяем, что кривой участок находится в пределах общего участка
+      if (!isNaN(curvedStartVal) && !isNaN(curvedEndVal)) {
+        if (curvedStartVal < start || curvedEndVal > end) {
+          alert("Кривой участок должен находиться в пределах общего участка пути!");
+          return false;
+        }
+        if (curvedEndVal <= curvedStartVal) {
+          alert("Конец кривого участка должен быть больше начала!");
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    // Функция для расчета шпал для комбинированного участка
+    function calculateMixedSleepers(totalLength, curvedLength, epureType, radius) {
+      const straightLength = totalLength - curvedLength;
+      
+      // Эпюра для прямого участка
+      const straightEpure = epureType === "1600_1840" ? 1600 : 1840;
+      
+      // Эпюра для кривого участка
+      const isSmallRadius = radius <= 1200;
+      let curvedEpure;
+      if (epureType === "1840_2000") {
+        curvedEpure = isSmallRadius ? 2000 : 1840;
+      } else {
+        curvedEpure = isSmallRadius ? 1840 : 1600;
+      }
+      
+      // Расчет шпал для каждой части
+      const straightSleepers = Math.ceil((straightLength * straightEpure) / 1000);
+      const curvedSleepers = Math.ceil((curvedLength * curvedEpure) / 1000);
+      
+      return {
+        straightSleepers: straightSleepers,
+        curvedSleepers: curvedSleepers,
+        totalSleepers: straightSleepers + curvedSleepers,
+        straightEpure: straightEpure,
+        curvedEpure: curvedEpure
+      };
+    }
+
+    // Функция для добавления записи в таблицу
+    function addToTable(record) {
+      const kilometer = record.kilometer;
+      
+      // Инициализируем данные для километража, если их еще нет
+      if (!kilometerData[kilometer]) {
+        kilometerData[kilometer] = {
+          totalLength: 0,
+          records: [],
+          besP65: { length: 0, records: [] },
+          besP50: { length: 0, records: [] },
+          zvenP65: { length: 0, records: [] },
+          zvenP50: { length: 0, records: [] },
+          equalizingSpans: 0,
+          oldTrackBes: 0, // Старогодные для бесстыкового пути
+          oldTrackZven: 0, // Старогодные для звеньевого пути
+          nonThermo: 0, // Нетермоупрочненные для звеньевого пути
+          // Новые данные для второй таблицы
+          besSleepers: { wood: 0, concrete: 0 },
+          zvenSleepers: { wood: 0, concrete: 0 },
+          besSB: 0, // Бесстыковой путь со скреплением СБ
+          zvenSB: 0, // Звеньевой путь со скреплением СБ
+          besSwitchBeams: 0, // Переводные брусья для бесстыкового
+          zvenSwitchBeams: 0, // Переводные брусья для звеньевого
+          curvedSections: 0, // Криволинейные участки P>600 м
+          ballastThin: 0 // Забалластированные участки с толщиной балласта < 30 см
+        };
+      }
+
+      // Добавляем запись
+      kilometerData[kilometer].records.push(record);
+      kilometerData[kilometer].totalLength += record.length;
+
+      // Добавляем данные уравнительных пролетов
+      kilometerData[kilometer].equalizingSpans += record.equalizingSpans;
+
+      // Распределяем по типам пути и рельсов
+      if (record.pathType === 'besstykovoy') {
+        if (record.railType === 'p65') {
+          kilometerData[kilometer].besP65.records.push(record);
+          kilometerData[kilometer].besP65.length += record.length;
+        } else {
+          kilometerData[kilometer].besP50.records.push(record);
+          kilometerData[kilometer].besP50.length += record.length;
+        }
+        
+        // Если выбран ВС, добавляем в старогодные для бесстыкового
+        if (record.vnvsChoice === 'vs') {
+          kilometerData[kilometer].oldTrackBes += record.length;
+        }
+        
+        // Для второй таблицы - распределение ОСНОВНЫХ шпал по материалу
+        if (record.material === 'do') {
+          kilometerData[kilometer].besSleepers.wood += Math.ceil(record.mainSleepers);
+        } else {
+          kilometerData[kilometer].besSleepers.concrete += Math.ceil(record.mainSleepers);
+        }
+        
+        // Скрепление СБ
+        if (record.material === 'sb') {
+          kilometerData[kilometer].besSB += record.length;
+        }
+        
+        // Переводные брусья (отдельно)
+        kilometerData[kilometer].besSwitchBeams += Math.ceil(record.switchSleepers);
+        
+      } else if (record.pathType === 'zvenevoy') {
+        if (record.railType === 'p65') {
+          kilometerData[kilometer].zvenP65.records.push(record);
+          kilometerData[kilometer].zvenP65.length += record.length;
+        } else {
+          kilometerData[kilometer].zvenP50.records.push(record);
+          kilometerData[kilometer].zvenP50.length += record.length;
+        }
+        
+        // Если выбран ВС, добавляем в старогодные для звеньевого
+        if (record.vnvsChoice === 'vs') {
+          kilometerData[kilometer].oldTrackZven += record.length;
+        }
+        
+        // **ИСПРАВЛЕНИЕ: Добавляем в нетермоупрочненные только если галочка ТО НЕ стоит И путь звеньевой**
+        if (!record.toChecked && record.pathType === 'zvenevoy') {
+          kilometerData[kilometer].nonThermo += record.length;
+        }
+        
+        // Для второй таблицы - распределение ОСНОВНЫХ шпал по материалу
+        if (record.material === 'do') {
+          kilometerData[kilometer].zvenSleepers.wood += Math.ceil(record.mainSleepers);
+        } else {
+          kilometerData[kilometer].zvenSleepers.concrete += Math.ceil(record.mainSleepers);
+        }
+        
+        // Скрепление СБ
+        if (record.material === 'sb') {
+          kilometerData[kilometer].zvenSB += record.length;
+        }
+        
+        // Переводные брусья (отдельно)
+        kilometerData[kilometer].zvenSwitchBeams += Math.ceil(record.switchSleepers);
+      }
+      
+      // Криволинейные участки (если радиус > 600 м)
+      if (record.sectionType === 'curved' && record.radius > 600) {
+        kilometerData[kilometer].curvedSections += record.length;
+      } else if (record.sectionType === 'mixed' && record.radius > 600) {
+        kilometerData[kilometer].curvedSections += record.curvedLength / 1000;
+      }
+      
+      // Участки с тонким балластом (< 30 см)
+      if (record.ballastThickness < 30) {
+        kilometerData[kilometer].ballastThin += record.length;
+      }
+
+      updateProgress();
+      updateTable();
+      updateSecondTable();
+    }
+
+    // Функция для обновления прогресса
+    function updateProgress() {
+      const progressSection = document.getElementById("progress-section");
+      const currentKilometer = document.getElementById("current-kilometer");
+      const progressFill = document.getElementById("progress-fill");
+
+      const kilometer = document.getElementById("kilometer").value;
+      const totalLength = kilometerData[kilometer] ? kilometerData[kilometer].totalLength * 1000 : 0;
+      
+      progressSection.style.display = "block";
+      currentKilometer.textContent = totalLength.toFixed(0);
+      
+      const progressPercent = (totalLength / 1000) * 100;
+      progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+    }
+
+    // Функция для показа результатов по километражу
+    function showKilometerResults() {
+      const kilometer = document.getElementById("kilometer").value;
+      const summarySection = document.getElementById("kilometer-summary");
+      const summaryKilometer = document.getElementById("summary-kilometer");
+      const summaryContent = document.getElementById("summary-content");
+
+      if (kilometerData[kilometer]) {
+        const data = kilometerData[kilometer];
+        summaryKilometer.textContent = kilometer;
+        
+        let summaryHTML = `
+          <p><strong>Общая протяженность:</strong> ${(data.totalLength * 1000).toFixed(0)} м (${data.totalLength.toFixed(3)} км)</p>
+          <p><strong>Количество записей:</strong> ${data.records.length}</p>
+          <p><strong>Уравнительные пролеты:</strong> ${data.equalizingSpans} м</p>
+          <p><strong>Старогодные (бесстыковой):</strong> ${data.oldTrackBes.toFixed(3)} км</p>
+          <p><strong>Старогодные (звеньевой):</strong> ${data.oldTrackZven.toFixed(3)} км</p>
+          <p><strong>Нетермоупрочненные (звеньевой):</strong> ${data.nonThermo.toFixed(3)} км</p>
+          <div style="margin-top: 10px;">
+            <p><strong>Распределение по типам:</strong></p>
+            <p>• Бесстыковой P65: ${(data.besP65.length * 1000).toFixed(0)} м</p>
+            <p>• Бесстыковой P50: ${(data.besP50.length * 1000).toFixed(0)} м</p>
+            <p>• Звеньевой P65: ${(data.zvenP65.length * 1000).toFixed(0)} м</p>
+            <p>• Звеньевой P50: ${(data.zvenP50.length * 1000).toFixed(0)} м</p>
+          </div>
+        `;
+
+        summaryContent.innerHTML = summaryHTML;
+        summarySection.style.display = "block";
+
+        // Прокручиваем к сводке
+        summarySection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        alert("Нет данных для километража " + kilometer);
+      }
+    }
+
+    // Функция для обновления первой таблицы
+    function updateTable() {
+      const tableBody = document.getElementById("results-table-body");
+      const tableFooter = document.getElementById("results-table-footer");
+      
+      // Очищаем таблицу
+      tableBody.innerHTML = '';
+      
+      // Переменные для итогов
+      let totalBesP65 = 0;
+      let totalBesP50 = 0;
+      let totalZvenP65 = 0;
+      let totalZvenP50 = 0;
+      let totalAll = 0;
+      let totalT350 = 0;
+      let totalEqualizingSpans = 0;
+      let totalOldTrackBes = 0;
+      let totalOldTrackZven = 0;
+      let totalNonThermo = 0;
+
+      // Добавляем записи в таблицу по километражу
+      Object.keys(kilometerData).forEach(kilometer => {
+        const data = kilometerData[kilometer];
+        const row = document.createElement('tr');
+        
+        // Данные для таблицы
+        const besP65Length = data.besP65.length > 0 ? data.besP65.length.toFixed(3) : '';
+        const besP50Length = data.besP50.length > 0 ? data.besP50.length.toFixed(3) : '';
+        const zvenP65Length = data.zvenP65.length > 0 ? data.zvenP65.length.toFixed(3) : '';
+        const zvenP50Length = data.zvenP50.length > 0 ? data.zvenP50.length.toFixed(3) : '';
+
+        // Для старогодных и нетермоупрочненных ставим прочерки, если значений нет
+        const oldTrackBesDisplay = data.oldTrackBes > 0 ? data.oldTrackBes.toFixed(3) : '-';
+        const oldTrackZvenDisplay = data.oldTrackZven > 0 ? data.oldTrackZven.toFixed(3) : '-';
+        const nonThermoDisplay = data.nonThermo > 0 ? data.nonThermo.toFixed(3) : '-';
+
+        // Суммируем итоги
+        totalBesP65 += data.besP65.length;
+        totalBesP50 += data.besP50.length;
+        totalZvenP65 += data.zvenP65.length;
+        totalZvenP50 += data.zvenP50.length;
+        totalAll += data.totalLength;
+        totalEqualizingSpans += data.equalizingSpans;
+        totalOldTrackBes += data.oldTrackBes;
+        totalOldTrackZven += data.oldTrackZven;
+        totalNonThermo += data.nonThermo;
+
+        // Проверяем T > 350 для первой укладки
+        const hasT350 = data.records.some(r => r.T > 350);
+        if (hasT350) {
+          totalT350 += data.totalLength;
+        }
+
+        row.innerHTML = `
+          <td>${kilometer}</td>
+          
+          <!-- Бесстыковой P65 - только протяженность -->
+          <td>${besP65Length}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Бесстыковой P50 - только протяженность -->
+          <td>${besP50Length}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Уравнительные пролеты и старогодные для бесстыкового -->
+          <td>${(data.equalizingSpans / 1000).toFixed(3)}</td>
+          <td>${oldTrackBesDisplay}</td>
+          
+          <!-- Звеньевой P65 - только протяженность -->
+          <td>${zvenP65Length}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Звеньевой P50 - только протяженность -->
+          <td>${zvenP50Length}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Нетермоупрочненные и старогодные для звеньевого -->
+          <td>${nonThermoDisplay}</td>
+          <td>${oldTrackZvenDisplay}</td>
+          
+          <!-- Протяженность первой укладки и итого -->
+          <td>${hasT350 ? data.totalLength.toFixed(3) : ''}</td>
+          <td>${data.totalLength.toFixed(3)}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+
+      // Для итогов также используем прочерки, если значений нет
+      const totalOldTrackBesDisplay = totalOldTrackBes > 0 ? totalOldTrackBes.toFixed(3) : '-';
+      const totalOldTrackZvenDisplay = totalOldTrackZven > 0 ? totalOldTrackZven.toFixed(3) : '-';
+      const totalNonThermoDisplay = totalNonThermo > 0 ? totalNonThermo.toFixed(3) : '-';
+
+      // Обновляем итоги
+      tableFooter.innerHTML = `
+        <tr style="background-color: #e9ecef; font-weight: bold;">
+          <td>ИТОГО:</td>
+          
+          <!-- Бесстыковой P65 -->
+          <td>${totalBesP65.toFixed(3)}</td>
+          <td colspan="4"></td>
+          
+          <!-- Бесстыковой P50 -->
+          <td>${totalBesP50.toFixed(3)}</td>
+          <td colspan="4"></td>
+          
+          <!-- Уравнительные пролеты и старогодные для бесстыкового -->
+          <td>${(totalEqualizingSpans / 1000).toFixed(3)}</td>
+          <td>${totalOldTrackBesDisplay}</td>
+          
+          <!-- Звеньевой P65 -->
+          <td>${totalZvenP65.toFixed(3)}</td>
+          <td colspan="4"></td>
+          
+          <!-- Звеньевой P50 -->
+          <td>${totalZvenP50.toFixed(3)}</td>
+          <td colspan="4"></td>
+          
+          <!-- Нетермоупрочненные и старогодные для звеньевого -->
+          <td>${totalNonThermoDisplay}</td>
+          <td>${totalOldTrackZvenDisplay}</td>
+          
+          <!-- Протяженность первой укладки и итого -->
+          <td>${totalT350.toFixed(3)}</td>
+          <td>${totalAll.toFixed(3)}</td>
+        </tr>
+      `;
+    }
+
+    // Функция для обновления второй таблицы
+    function updateSecondTable() {
+      const tableBody = document.getElementById("results-table-body-2");
+      const tableFooter = document.getElementById("results-table-footer-2");
+      
+      // Очищаем таблицу
+      tableBody.innerHTML = '';
+      
+      // Переменные для итогов
+      let totalBesWood = 0;
+      let totalBesConcrete = 0;
+      let totalBesSB = 0;
+      let totalBesSwitch = 0;
+      let totalZvenWood = 0;
+      let totalZvenConcrete = 0;
+      let totalZvenSB = 0;
+      let totalZvenSwitch = 0;
+      let totalCurved = 0;
+      let totalBallastThin = 0;
+
+      // Добавляем записи в таблицу по километражу
+      Object.keys(kilometerData).forEach(kilometer => {
+        const data = kilometerData[kilometer];
+        const row = document.createElement('tr');
+        
+        // Данные для таблицы
+        const besWood = data.besSleepers.wood > 0 ? data.besSleepers.wood : '-';
+        const besConcrete = data.besSleepers.concrete > 0 ? data.besSleepers.concrete : '-';
+        const besSB = data.besSB > 0 ? data.besSB.toFixed(3) : '-';
+        const besSwitch = data.besSwitchBeams > 0 ? data.besSwitchBeams : '-';
+        
+        const zvenWood = data.zvenSleepers.wood > 0 ? data.zvenSleepers.wood : '-';
+        const zvenConcrete = data.zvenSleepers.concrete > 0 ? data.zvenSleepers.concrete : '-';
+        const zvenSB = data.zvenSB > 0 ? data.zvenSB.toFixed(3) : '-';
+        const zvenSwitch = data.zvenSwitchBeams > 0 ? data.zvenSwitchBeams : '-';
+        
+        const curved = data.curvedSections > 0 ? data.curvedSections.toFixed(3) : '-';
+        const ballastThin = data.ballastThin > 0 ? data.ballastThin.toFixed(3) : '-';
+
+        // Суммируем итоги
+        totalBesWood += data.besSleepers.wood;
+        totalBesConcrete += data.besSleepers.concrete;
+        totalBesSB += data.besSB;
+        totalBesSwitch += data.besSwitchBeams;
+        totalZvenWood += data.zvenSleepers.wood;
+        totalZvenConcrete += data.zvenSleepers.concrete;
+        totalZvenSB += data.zvenSB;
+        totalZvenSwitch += data.zvenSwitchBeams;
+        totalCurved += data.curvedSections;
+        totalBallastThin += data.ballastThin;
+
+        row.innerHTML = `
+          <td>${kilometer}</td>
+          
+          <!-- Бесстыковой путь: деревянные шпалы -->
+          <td>${besWood}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Бесстыковой путь: железобетонные шпалы -->
+          <td>${besConcrete}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Бесстыковой путь: скрепление СБ и переводные брусья -->
+          <td>${besSB}</td>
+          <td>${besSwitch}</td>
+          
+          <!-- Звеньевой путь: деревянные шпалы -->
+          <td>${zvenWood}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Звеньевой путь: железобетонные шпалы -->
+          <td>${zvenConcrete}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          
+          <!-- Звеньевой путь: скрепление СБ и переводные брусья -->
+          <td>${zvenSB}</td>
+          <td>${zvenSwitch}</td>
+          
+          <!-- Криволинейные участки и забалластированные участки -->
+          <td>${curved}</td>
+          <td>${ballastThin}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+
+      // Обновляем итоги
+      tableFooter.innerHTML = `
+        <tr style="background-color: #e9ecef; font-weight: bold;">
+          <td>ИТОГО:</td>
+          
+          <!-- Бесстыковой путь: деревянные шпалы -->
+          <td>${totalBesWood > 0 ? totalBesWood : '-'}</td>
+          <td colspan="4"></td>
+          
+          <!-- Бесстыковой путь: железобетонные шпалы -->
+          <td>${totalBesConcrete > 0 ? totalBesConcrete : '-'}</td>
+          <td colspan="4"></td>
+          
+          <!-- Бесстыковой путь: скрепление СБ и переводные брусья -->
+          <td>${totalBesSB > 0 ? totalBesSB.toFixed(3) : '-'}</td>
+          <td>${totalBesSwitch > 0 ? totalBesSwitch : '-'}</td>
+          
+          <!-- Звеньевой путь: деревянные шпалы -->
+          <td>${totalZvenWood > 0 ? totalZvenWood : '-'}</td>
+          <td colspan="4"></td>
+          
+          <!-- Звеньевой путь: железобетонные шпалы -->
+          <td>${totalZvenConcrete > 0 ? totalZvenConcrete : '-'}</td>
+          <td colspan="4"></td>
+          
+          <!-- Звеньевой путь: скрепление СБ и переводные брусья -->
+          <td>${totalZvenSB > 0 ? totalZvenSB.toFixed(3) : '-'}</td>
+          <td>${totalZvenSwitch > 0 ? totalZvenSwitch : '-'}</td>
+          
+          <!-- Криволинейные участки и забалластированные участки -->
+          <td>${totalCurved > 0 ? totalCurved.toFixed(3) : '-'}</td>
+          <td>${totalBallastThin > 0 ? totalBallastThin.toFixed(3) : '-'}</td>
+        </tr>
+      `;
+    }
+
+    // Функция для управления отображением полей моста
+    function toggleBridgeFields() {
+      const bridgeType = document.getElementById("bridge_type");
+      const bridgeInputsGroup = document.getElementById("bridge_inputs_group");
+      
+      if (bridgeType.value === "B" || bridgeType.value === "BB") {
+        bridgeInputsGroup.style.display = "grid";
+      } else {
+        bridgeInputsGroup.style.display = "none";
+        document.getElementById("bridge_start").value = "";
+        document.getElementById("bridge_end").value = "";
+        document.getElementById("bridge_length_result").value = "";
+      }
+    }
+
+    // Функция для расчета длины моста
+    function calculateBridgeLength() {
+      const bridgeStart = document.getElementById("bridge_start");
+      const bridgeEnd = document.getElementById("bridge_end");
+      const bridgeLengthResult = document.getElementById("bridge_length_result");
+      
+      const start = parseFloat(bridgeStart.value);
+      const end = parseFloat(bridgeEnd.value);
+
+      if (!isNaN(start) && !isNaN(end) && end >= start) {
+        const lengthMeters = end - start;
+        bridgeLengthResult.value = `${lengthMeters.toFixed(0)} м = ${(lengthMeters / 1000).toFixed(3)} км`;
+      } else {
+        bridgeLengthResult.value = "";
+      }
+    }
+
+    // Функция для валидации полей начала и конца участка
+    function validatePoints() {
+      const startPoint = document.getElementById("start_point");
+      const endPoint = document.getElementById("end_point");
+      const startPointError = document.getElementById("start_point_error");
+      const endPointError = document.getElementById("end_point_error");
+      
+      const start = parseFloat(startPoint.value);
+      const end = parseFloat(endPoint.value);
+      let isValid = true;
+
+      // Сбрасываем ошибки
+      startPoint.classList.remove("error");
+      endPoint.classList.remove("error");
+      startPointError.style.display = "none";
+      endPointError.style.display = "none";
+
+      // Проверка начала участка
+      if (!isNaN(start) && (start < 0 || start > 999)) {
+        startPoint.classList.add("error");
+        startPointError.style.display = "block";
+        isValid = false;
+      }
+
+      // Проверка конца участка
+      if (!isNaN(end) && (end < 0 || end > 1000)) {
+        endPoint.classList.add("error");
+        endPointError.style.display = "block";
+        isValid = false;
+      }
+
+      // Проверка что конец больше начала
+      if (!isNaN(start) && !isNaN(end) && end <= start) {
+        endPoint.classList.add("error");
+        endPointError.textContent = "Конец участка должен быть больше начала";
+        endPointError.style.display = "block";
+        isValid = false;
+      } else {
+        endPointError.textContent = "Конец участка должен быть от 0 до 1000 метров";
+      }
+
+      return isValid;
+    }
+
+    // Функция для показа/скрытия поля радиуса
+    function toggleRadiusField() {
+      const sectionType = document.getElementById("section_type");
+      const radiusGroup = document.getElementById("radius_group");
+      const curvedSectionGroup = document.getElementById("curved_section_group");
+      
+      if (sectionType.value === "curved") {
+        radiusGroup.style.display = "block";
+        curvedSectionGroup.style.display = "none";
+      } else if (sectionType.value === "mixed") {
+        radiusGroup.style.display = "block";
+        curvedSectionGroup.style.display = "block";
+      } else {
+        radiusGroup.style.display = "none";
+        curvedSectionGroup.style.display = "none";
+        document.getElementById("radius_input").value = "";
+      }
+    }
+
+    // Функция для расчета протяженности участка
+    function calculateLength() {
+      const startPoint = document.getElementById("start_point");
+      const endPoint = document.getElementById("end_point");
+      const lengthResult = document.getElementById("length_result");
+      const lengthValue = document.getElementById("length_value");
+      const lengthValueKm = document.getElementById("length_value_km");
+      
+      const start = parseFloat(startPoint.value);
+      const end = parseFloat(endPoint.value);
+
+      if (!isNaN(start) && !isNaN(end) && end >= start && validatePoints()) {
+        const lengthMeters = end - start;
+        const lengthKm = lengthMeters / 1000;
+
+        lengthValue.textContent = lengthMeters.toFixed(0);
+        lengthValueKm.textContent = lengthKm.toFixed(3);
+        lengthResult.style.display = "block";
+      } else {
+        lengthResult.style.display = "none";
+      }
+    }
+
+    // Функция для получения значения эпюра (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+    function getEpureValue(epureType, isCurved, radius) {
+      if (!isCurved) {
+        // Прямые участки
+        return epureType === "1600_1840" ? 1600 : 1840;
+      } else {
+        // Кривые участки - для обеих эпюр используется условие с радиусом 1200 м
+        const isSmallRadius = radius <= 1200;
+        
+        if (epureType === "1840_2000") {
+          return isSmallRadius ? 2000 : 1840;
+        } else {
+          // "1600_1840" - для кривых с радиусом ≤ 1200м → 1840, для кривых > 1200м → 1600
+          return isSmallRadius ? 1840 : 1600;
+        }
+      }
+    }
+
+    // Функция для расчета основных шпал (с округлением в большую сторону)
+    function calculateMainSleepers(length, epureValue) {
+      if (length > 0 && epureValue > 0) {
+        return Math.ceil((length * epureValue) / 1000);
+      }
+      return 0;
+    }
+
+    // Функция для расчета мостовых брусьев (для мостов типа Б и ББ, с округлением в большую сторону)
+    function calculateBridgeSleepers(bridgeType, bridgeLength) {
+      if ((bridgeType === "B" || bridgeType === "BB") && bridgeLength > 0) {
+        // Для мостов всегда используется эпюра 2000
+        return Math.ceil((bridgeLength * 2000) / 1000);
+      }
+      return 0;
+    }
+
+    // Функция для расчета шпал переводных брусьев
+    function calculateSwitchSleepers(switchCount, railType, material) {
+      const count = parseInt(switchCount) || 0;
+      if (count === 0) return 0;
+
+      if (railType === "p65") {
+        if (material === "kb" || material === "sb") return count * 92;
+        if (material === "do") return count * 90;
+      } else if (railType === "p50") {
+        return count * 87;
+      }
+      return 0;
+    }
+
+    // Функция для расчета толщины балласта
+    function calculateBallastThickness(material) {
+      if (material === "do") return 25;
+      if (material === "kb" || material === "sb") return 35;
+      return 0;
+    }
+
+    // Основная функция расчета
+    function calculateAll(event) {
+      if (event) event.preventDefault();
+      
+      if (!validatePoints()) {
+        const resultContent = document.getElementById("result-content");
+        const resultBox = document.getElementById("result");
+        
+        resultContent.innerHTML = "Ошибка: проверьте правильность ввода начала и конца участка!";
+        resultBox.style.display = "block";
+        resultBox.style.background = "linear-gradient(135deg, #f72585, #b5179e)";
+        return;
+      }
+
+      // Валидация кривого участка для комбинированного типа
+      if (!validateCurvedSection()) {
+        return;
+      }
+
+      const year = parseInt(document.getElementById("year_input").value);
+      const kilometer = document.getElementById("kilometer").value;
+      const start = parseFloat(document.getElementById("start_point").value);
+      const end = parseFloat(document.getElementById("end_point").value);
+      const switchCountVal = parseInt(document.getElementById("switch_count").value) || 0;
+      const bridgeTypeVal = document.getElementById("bridge_type").value;
+      const bridgeStartVal = parseFloat(document.getElementById("bridge_start").value) || 0;
+      const bridgeEndVal = parseFloat(document.getElementById("bridge_end").value) || 0;
+      const material = document.getElementById("rail_material").value;
+      const equalizingSpansVal = parseFloat(document.getElementById("equalizing_spans").value) || 0;
+      const pathType = document.getElementById("path_type").value;
+      const epureType = document.getElementById("epure_type").value;
+      const railType = document.getElementById("rail_type").value;
+      const sectionType = document.getElementById("section_type").value;
+      const radius = parseFloat(document.getElementById("radius_input").value);
+      const vnvsChoice = document.getElementById("vn_vs_choice").value;
+      const toChecked = document.getElementById("to_checkbox").checked;
+      
+      // Данные для кривого участка (только для комбинированного типа)
+      const curvedStartVal = parseFloat(document.getElementById("curved_start").value) || 0;
+      const curvedEndVal = parseFloat(document.getElementById("curved_end").value) || 0;
+      const curvedLength = curvedEndVal - curvedStartVal;
+      
+      const resultContent = document.getElementById("result-content");
+      const resultBox = document.getElementById("result");
+      const deltaField = document.getElementById("delta_t");
+      const TField = document.getElementById("T_value");
+      const UField = document.getElementById("U_value");
+      const shpalCountField = document.getElementById("shpal_count");
+
+      // Проверка введенных данных
+      if (!isNaN(year) && year >= 1900 && year <= 2025) {
+        // Для кривых участков проверяем радиус
+        if (
+          (sectionType === "curved" || sectionType === "mixed") &&
+          (isNaN(radius) || radius <= 0)
+        ) {
+          resultContent.innerHTML = "Ошибка: для кривого участка введите корректный радиус!";
+          resultBox.style.display = "block";
+          resultBox.style.background = "linear-gradient(135deg, #f72585, #b5179e)";
+          return;
+        }
+
+        const deltaT = 2025 - year + 1;
+        deltaField.value = deltaT;
+
+        // Расчет T
+        let T;
+        if (vnvsChoice === "vn") {
+          T = deltaT * G;
+        } else if (vnvsChoice === "vs") {
+          T = deltaT * G + 450;
+        }
+
+        TField.value = T.toFixed(2);
+
+        // Расчет U
+        let U;
+        const isCurved = sectionType === "curved" || sectionType === "mixed";
+        const isSmallRadius = isCurved && radius <= 650;
+
+        if (vnvsChoice === "vn") {
+          U = isSmallRadius ? (T / 50) * 1.5 : (T / 50) * 1;
+        } else if (vnvsChoice === "vs") {
+          U = isSmallRadius ? 6 + (T / 50) * 1.5 : 6 + ((T - 450) / 50) * 1;
+        }
+
+        UField.value = U ? U.toFixed(2) : "0.00";
+
+        // Расчеты для шпал
+        let totalLength = 0;
+        let effectiveLength = 0;
+        let mainSleepers = 0;
+        let bridgeSleepers = 0;
+        let switchSleepers = 0;
+        let totalSleepers = 0;
+        let ballastThickness = 0;
+        let breakdownHTML = "";
+
+        if (!isNaN(start) && !isNaN(end) && end >= start && validatePoints()) {
+          totalLength = end - start;
+          
+          // Расчет длины моста для эффективной длины
+          let totalBridgeLength = 0;
+          if (bridgeTypeVal !== "none" && !isNaN(bridgeStartVal) && !isNaN(bridgeEndVal) && bridgeEndVal >= bridgeStartVal) {
+            totalBridgeLength = bridgeEndVal - bridgeStartVal;
+          }
+          
+          const switchLength = calculateSwitchLength(switchCountVal, railType);
+          
+          // Эффективная длина (без мостов и стрелочных переводов)
+          effectiveLength = calculateEffectiveLength(totalLength, totalBridgeLength, switchLength);
+          
+          // Расчет основных шпал в зависимости от типа участка
+          if (sectionType === "mixed") {
+            // Комбинированный участок: отдельный расчет для прямой и кривой частей
+            const mixedResult = calculateMixedSleepers(effectiveLength, curvedLength, epureType, radius);
+            mainSleepers = mixedResult.totalSleepers;
+            
+            // Формируем HTML для детального отображения расчета
+            breakdownHTML = `
+              <div class="section-breakdown">
+                <h5><i class="fas fa-calculator"></i> Детальный расчет для комбинированного участка</h5>
+                <p><strong>Прямой участок:</strong> ${(effectiveLength - curvedLength).toFixed(1)} м × ${mixedResult.straightEpure} шт/км = ${mixedResult.straightSleepers} шт</p>
+                <p><strong>Кривой участок:</strong> ${curvedLength.toFixed(1)} м × ${mixedResult.curvedEpure} шт/км = ${mixedResult.curvedSleepers} шт</p>
+                <p><strong>Итого основных шпал:</strong> ${mixedResult.straightSleepers} + ${mixedResult.curvedSleepers} = ${mainSleepers} шт</p>
+              </div>
+            `;
+          } else {
+            // Простой участок (прямой или кривой)
+            const epureValue = getEpureValue(epureType, sectionType === "curved", radius);
+            mainSleepers = calculateMainSleepers(effectiveLength, epureValue);
+          }
+          
+          // Расчет мостовых брусьев (для мостов типа Б и ББ)
+          bridgeSleepers = calculateBridgeSleepers(bridgeTypeVal, totalBridgeLength);
+          
+          // Расчет переводных брусьев
+          switchSleepers = calculateSwitchSleepers(switchCountVal, railType, material);
+          
+          // Общее количество шпал
+          totalSleepers = mainSleepers + bridgeSleepers + switchSleepers;
+          ballastThickness = calculateBallastThickness(material);
+        }
+
+        shpalCountField.value = totalSleepers;
+
+        // Создаем запись для таблицы
+        const record = {
+          kilometer: kilometer,
+          pathType: pathType,
+          railType: railType,
+          epureType: epureType,
+          material: material,
+          year: year,
+          length: totalLength / 1000, // в километрах
+          T: T,
+          vnvsChoice: vnvsChoice,
+          toChecked: toChecked, // Добавляем состояние галочки ТО
+          equalizingSpans: equalizingSpansVal,
+          mainSleepers: mainSleepers,
+          bridgeSleepers: bridgeSleepers,
+          switchSleepers: switchSleepers,
+          sectionType: sectionType,
+          radius: radius,
+          ballastThickness: ballastThickness,
+          effectiveLength: effectiveLength, // добавляем эффективную длину
+          curvedLength: curvedLength // добавляем длину кривого участка
+        };
+
+        // Добавляем запись в таблицу
+        addToTable(record);
+
+        // Формирование результатов
+        const pathTypeText = document.getElementById("path_type").options[document.getElementById("path_type").selectedIndex].text;
+        const railTypeText = document.getElementById("rail_type").options[document.getElementById("rail_type").selectedIndex].text;
+        const sectionTypeText = document.getElementById("section_type").options[document.getElementById("section_type").selectedIndex].text;
+        const vnvsChoiceText = document.getElementById("vn_vs_choice").options[document.getElementById("vn_vs_choice").selectedIndex].text;
+        const materialText = document.getElementById("rail_material").options[document.getElementById("rail_material").selectedIndex].text;
+
+        let kilometerInfo = kilometer
+          ? `<p>Километраж: <strong>${kilometer}</strong></p>`
+          : "";
+        let lengthInfo =
+          totalLength > 0
+            ? `<p>Протяженность участка: <strong>${totalLength.toFixed(0)} м = ${(totalLength / 1000).toFixed(3)} км</strong></p>`
+            : "";
+        let radiusInfo = (sectionType === "curved" || sectionType === "mixed")
+          ? `<p>Радиус: <strong>${radius} м</strong></p>`
+          : "";
+        
+        let curvedInfo = "";
+        if (sectionType === "mixed") {
+          curvedInfo = `<p>Длина кривого участка: <strong>${curvedLength.toFixed(0)} м</strong></p>`;
+        }
+        
+        let bridgeInfo = "";
+        let totalBridgeLength = 0;
+        if (bridgeTypeVal !== "none" && !isNaN(bridgeStartVal) && !isNaN(bridgeEndVal) && bridgeEndVal >= bridgeStartVal) {
+          totalBridgeLength = bridgeEndVal - bridgeStartVal;
+          bridgeInfo = `<p>Тип моста: <strong>${bridgeTypeVal}</strong>, Длина: <strong>${totalBridgeLength} м</strong></p>`;
+        }
+        
+        let additionalInfo = `
+          <p>Уравнительные пролеты: <strong>${equalizingSpansVal} м</strong></p>
+        `;
+        
+        // Добавляем информацию о том, куда будут записаны данные ВС
+        if (vnvsChoice === 'vs') {
+          if (pathType === 'besstykovoy') {
+            additionalInfo += `<p><strong>Данные будут записаны в столбец "из них старогодные" для бесстыкового пути</strong></p>`;
+          } else if (pathType === 'zvenevoy') {
+            additionalInfo += `<p><strong>Данные будут записаны в столбцы "из них старогодные" для звеньевого пути</strong></p>`;
+          }
+        }
+        
+        // Добавляем информацию о галочке ТО
+        if (toChecked) {
+          additionalInfo += `<p><strong>Галочка "ТО" включена - данные НЕ будут записаны в столбец "из них нетермоупрочненные"</strong></p>`;
+        } else {
+          additionalInfo += `<p><strong>Галочка "ТО" выключена - данные будут записаны в столбец "из них нетермоупрочненные"</strong></p>`;
+        }
+
+        // Детальный расчет шпал
+        let shpalDetails = "";
+        if (totalLength > 0) {
+          shpalDetails = `
+          <div class="shpal-details">
+            <h5><i class="fas fa-calculator"></i> Детальный расчет шпал</h5>
+            <p><strong>Исходные данные:</strong></p>
+            <p>• Общая длина: ${totalLength.toFixed(0)} м</p>
+            <p>• Мосты: ${totalBridgeLength} м</p>
+            <p>• Стрелочные переводы: ${switchCountVal} шт</p>
+            <p>• Эффективная длина: ${effectiveLength.toFixed(1)} м</p>
+            ${breakdownHTML || `<p>• Эпюра: ${getEpureValue(epureType, sectionType === "curved", radius)} шт/км</p>`}
+            
+            <p><strong>Расчет:</strong></p>
+            ${sectionType === "mixed" ? 
+              `<p>• Основные шпалы: ${mainSleepers} шт (см. детали выше)</p>` : 
+              `<p>• Основные шпалы: Math.ceil((${effectiveLength.toFixed(1)} м × ${getEpureValue(epureType, sectionType === "curved", radius)} шт/км) / 1000) = ${mainSleepers} шт</p>`
+            }
+            ${bridgeSleepers > 0 ? `<p>• Мостовые брусья: Math.ceil((${totalBridgeLength} м × 2000) / 1000) = ${bridgeSleepers} шт</p>` : ''}
+            <p>• Переводные брусья: ${switchSleepers} шт</p>
+            <p>• Толщина балласта: ${ballastThickness} см</p>
+            <p style="margin-top: 10px; font-size: 1.1rem;"><strong>Итого шпал: ${totalSleepers} шт</strong></p>
+          </div>
+        `;
+        }
+
+        resultContent.innerHTML = `
+        ${kilometerInfo}
+        ${lengthInfo}
+        ${curvedInfo}
+        ${bridgeInfo}
+        ${additionalInfo}
+        <p>Тип пути: <strong>${pathTypeText}</strong></p>
+        <p>Эпюр укладки: <strong>${document.getElementById("epure_type").options[document.getElementById("epure_type").selectedIndex].text}</strong></p>
+        <p>Рельсы: <strong>${railTypeText}</strong></p>
+        <p>Материал скрепления: <strong>${materialText}</strong></p>
+        <p>Участок: <strong>${sectionTypeText}</strong></p>
+        ${radiusInfo}
+        <p>Выбор: <strong>${vnvsChoiceText}</strong></p>
+        <p style="margin-top: 10px; font-size: 1.2rem;">T = <strong>${T.toFixed(2)}</strong></p>
+        <p style="font-size: 1.2rem;">U = <strong>${U ? U.toFixed(2) : "0.00"}</strong></p>
+        <p style="margin-top: 10px; font-size: 1.1rem; background: #e8f5e8; padding: 10px; border-radius: 5px;">
+          <strong>Данные добавлены в таблицу для километража ${kilometer}!</strong>
+        </p>
+        ${shpalDetails}
+      `;
+
+        resultBox.style.display = "block";
+        resultBox.style.background = "linear-gradient(135deg, #4cc9f0, #4361ee)";
+      } else {
+        deltaField.value = "";
+        TField.value = "";
+        UField.value = "";
+        shpalCountField.value = "";
+        resultContent.innerHTML = "Ошибка: введите корректный год (1900-2025)!";
+        resultBox.style.display = "block";
+        resultBox.style.background = "linear-gradient(135deg, #f72585, #b5179e)";
+      }
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("calculationForm");
+      const yearInput = document.getElementById("year_input");
+      const startPoint = document.getElementById("start_point");
+      const endPoint = document.getElementById("end_point");
+      const sectionType = document.getElementById("section_type");
+      const bridgeType = document.getElementById("bridge_type");
+      const vnvsChoice = document.getElementById("vn_vs_choice");
+      const vsNotice = document.getElementById("vs_notice");
+      const toCheckbox = document.getElementById("to_checkbox");
+      const showResultsBtn = document.getElementById("show-results-always");
+
+      // **ИСПРАВЛЕНИЕ: Кнопка всегда доступна**
+      showResultsBtn.addEventListener("click", showKilometerResults);
+
+      // Обработчик для выбора ВН/ВС
+      vnvsChoice.addEventListener("change", function() {
+        if (this.value === "vs") {
+          vsNotice.style.display = "block";
+        } else {
+          vsNotice.style.display = "none";
+        }
+      });
+
+      // Обработчик для галочки ТО
+      toCheckbox.addEventListener("change", function() {
+        // Можно добавить дополнительную логику при изменении состояния галочки
+      });
+
+      // Инициализация полей моста
+      toggleBridgeFields();
+      bridgeType.addEventListener("change", toggleBridgeFields);
+      document.getElementById("bridge_start").addEventListener("input", calculateBridgeLength);
+      document.getElementById("bridge_end").addEventListener("input", calculateBridgeLength);
+
+      // Инициализация полей кривого участка
+      toggleCurvedFields();
+      toggleRadiusField();
+      document.getElementById("curved_start").addEventListener("input", calculateCurvedLength);
+      document.getElementById("curved_end").addEventListener("input", calculateCurvedLength);
+
+      // Обработчики изменения полей
+      sectionType.addEventListener("change", function() {
+        toggleRadiusField();
+        toggleCurvedFields();
+      });
+      startPoint.addEventListener("input", function() {
+        validatePoints();
+        calculateLength();
+      });
+      endPoint.addEventListener("input", function() {
+        validatePoints();
+        calculateLength();
+      });
+
+      // Обработка отправки формы
+      form.addEventListener("submit", calculateAll);
+
+      // Добавляем интерактивность - изменение стиля при фокусе
+      document.querySelectorAll(".form-control").forEach((input) => {
+        input.addEventListener("focus", function () {
+          this.style.borderColor = "var(--primary)";
+          this.style.boxShadow = "0 0 0 3px rgba(67, 97, 238, 0.15)";
+        });
+
+        input.addEventListener("blur", function () {
+          this.style.borderColor = "#e9ecef";
+          this.style.boxShadow = "none";
+        });
+      });
+    });
+  </script>
+</body>
+</html>

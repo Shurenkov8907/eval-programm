@@ -6,7 +6,6 @@
   <title>Железнодорожный калькулятор</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    /* Ваши существующие стили остаются без изменений */
     :root {
       --primary: #4361ee;
       --secondary: #3f37c9;
@@ -478,7 +477,6 @@
       color: #856404;
     }
 
-    /* Новый стиль для кнопки вывода результатов */
     .results-btn-container {
       position: sticky;
       bottom: 20px;
@@ -505,7 +503,6 @@
       box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
     }
 
-    /* Стили для секции кривого участка */
     .curved-section {
       background: #f8f9fa;
       border-radius: 8px;
@@ -525,6 +522,19 @@
       color: var(--primary);
       margin-bottom: 10px;
     }
+
+    .curved-info {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+    }
+    
+    .curved-info strong {
+      color: #856404;
+    }
   </style>
 </head>
 <body>
@@ -533,7 +543,7 @@
       <div class="card-header">
         <i class="fas fa-train rail-icon"></i>
         <h1>Расчёт параметров пути</h1>
-        <p>Калькулятор</p>
+        <p>Калькулятор с учётом криволинейных участков</p>
       </div>
 
       <div class="card-body">
@@ -956,16 +966,20 @@
           </div>
         </div>
 
-        <!-- Новая таблица -->
+        <!-- Вторая таблица с учётом криволинейных участков -->
         <div class="table-section">
           <h3><i class="fas fa-table"></i> Дополнительная таблица результатов</h3>
+          <div class="curved-info">
+            <strong>Внимание:</strong> В столбец "Протяженность криволинейных участков R>600 м, км" 
+            записывается протяженность только кривых участков с радиусом более 600 метров.
+          </div>
           <div class="table-container">
             <table class="results-table" border="3">
               <tr>
                 <td rowspan="3">№ км</td>
                 <td colspan="12">Бесстыковой путь</td>
                 <td colspan="12">Звеньевой путь</td>
-                <td rowspan="3">Протяженность <br>криволинейных <br>участков P>600 м, км</td>
+                <td rowspan="3">Протяженность <br>криволинейных <br>участков R>600 м, км</td>
                 <td rowspan="3">Протяженность<br> забалластированных<br> участков с толщиной <br>балласта < 30 см,км</td>
               </tr>
               <tr>
@@ -1014,45 +1028,20 @@
             </div>
 
             <div class="formula-box">
-              <div class="formula-title">Формула расчета мостовых брусьев:</div>
-              <div class="formula">N_мост = Math.ceil((L_мост × 2000) / 1000)</div>
-              <p>
-                где:<br />
-                N_мост - количество мостовых брусьев (округляется в большую сторону)<br />
-                L_мост - протяженность моста типа Б или ББ (м)<br />
-                E - всегда 2000 шт/км для мостов
-              </p>
-            </div>
-
-            <div class="formula-box">
-              <div class="formula-title">Формула расчета переводных брусьев:</div>
+              <div class="formula-title">Логика учёта криволинейных участков:</div>
               <div class="formula">
-                • Р65 + ЖБ (КБ/СБ) = 92 шпалы<br />
-                • Р65 + ДО = 90 шпал<br />
-                • Р50 = 87 шпал
+                if (секция === "кривая" ИЛИ секция === "комбинированная") {<br>
+                &nbsp;&nbsp;if (радиус > 600) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;записать_протяженность_в_столбец_кривых<br>
+                &nbsp;&nbsp;}<br>
+                }
               </div>
               <p>
                 где:<br />
-                N_перевод - количество шпал на переводных брусьях<br />
-                N_перевод = количество стрелочных переводов × K
+                • Для кривых участков: записывается вся протяженность<br />
+                • Для комбинированных: записывается только длина кривой части<br />
+                • Учитываются только участки с радиусом более 600 метров
               </p>
-            </div>
-
-            <div class="step">
-              <span class="step-number">1</span>
-              <span>Расчет основных шпал N = Math.ceil((L × E) / 1000)</span>
-            </div>
-            <div class="step">
-              <span class="step-number">2</span>
-              <span>Расчет мостовых брусьев (для мостов типа Б и ББ) с эпюрой 2000</span>
-            </div>
-            <div class="step">
-              <span class="step-number">3</span>
-              <span>Расчет переводных брусьев по условиям</span>
-            </div>
-            <div class="step">
-              <span class="step-number">4</span>
-              <span>Распределение по типам материала (ЖБ/деревянные)</span>
             </div>
           </div>
         </div>
@@ -1181,6 +1170,27 @@
       };
     }
 
+    // Функция для расчета протяженности криволинейных участков для таблицы
+    function calculateCurvedForTable(record) {
+      const sectionType = record.sectionType;
+      const radius = record.radius;
+      const totalLength = record.length; // в километрах
+      const curvedLength = record.curvedLength || 0; // в метрах
+      
+      // Только для кривых участков с радиусом > 600 м
+      if (radius > 600) {
+        if (sectionType === "curved") {
+          // Для полностью кривых участков - вся протяженность
+          return totalLength;
+        } else if (sectionType === "mixed") {
+          // Для комбинированных - только длина кривой части
+          return curvedLength / 1000; // переводим в километры
+        }
+      }
+      
+      return 0;
+    }
+
     // Функция для добавления записи в таблицу
     function addToTable(record) {
       const kilometer = record.kilometer;
@@ -1195,18 +1205,19 @@
           zvenP65: { length: 0, records: [] },
           zvenP50: { length: 0, records: [] },
           equalizingSpans: 0,
-          oldTrackBes: 0, // Старогодные для бесстыкового пути
-          oldTrackZven: 0, // Старогодные для звеньевого пути
-          nonThermo: 0, // Нетермоупрочненные для звеньевого пути
-          // Новые данные для второй таблицы
+          oldTrackBes: 0,
+          oldTrackZven: 0,
+          nonThermo: 0,
+          // Данные для второй таблицы
           besSleepers: { wood: 0, concrete: 0 },
           zvenSleepers: { wood: 0, concrete: 0 },
-          besSB: 0, // Бесстыковой путь со скреплением СБ
-          zvenSB: 0, // Звеньевой путь со скреплением СБ
-          besSwitchBeams: 0, // Переводные брусья для бесстыкового
-          zvenSwitchBeams: 0, // Переводные брусья для звеньевого
-          curvedSections: 0, // Криволинейные участки P>600 м
-          ballastThin: 0 // Забалластированные участки с толщиной балласта < 30 см
+          besSB: 0,
+          zvenSB: 0,
+          besSwitchBeams: 0,
+          zvenSwitchBeams: 0,
+          // КРИВОЛИНЕЙНЫЕ УЧАСТКИ R>600 М - ИСПРАВЛЕННАЯ ЛОГИКА
+          curvedSectionsR600: 0, // Только участки с радиусом > 600 м
+          ballastThin: 0
         };
       }
 
@@ -1227,24 +1238,21 @@
           kilometerData[kilometer].besP50.length += record.length;
         }
         
-        // Если выбран ВС, добавляем в старогодные для бесстыкового
         if (record.vnvsChoice === 'vs') {
           kilometerData[kilometer].oldTrackBes += record.length;
         }
         
-        // Для второй таблицы - распределение ОСНОВНЫХ шпал по материалу
+        // Для второй таблицы - распределение шпал
         if (record.material === 'do') {
           kilometerData[kilometer].besSleepers.wood += Math.ceil(record.mainSleepers);
         } else {
           kilometerData[kilometer].besSleepers.concrete += Math.ceil(record.mainSleepers);
         }
         
-        // Скрепление СБ
         if (record.material === 'sb') {
           kilometerData[kilometer].besSB += record.length;
         }
         
-        // Переводные брусья (отдельно)
         kilometerData[kilometer].besSwitchBeams += Math.ceil(record.switchSleepers);
         
       } else if (record.pathType === 'zvenevoy') {
@@ -1256,37 +1264,31 @@
           kilometerData[kilometer].zvenP50.length += record.length;
         }
         
-        // Если выбран ВС, добавляем в старогодные для звеньевого
         if (record.vnvsChoice === 'vs') {
           kilometerData[kilometer].oldTrackZven += record.length;
         }
         
-        // **ИСПРАВЛЕНИЕ: Добавляем в нетермоупрочненные только если галочка ТО НЕ стоит И путь звеньевой**
         if (!record.toChecked && record.pathType === 'zvenevoy') {
           kilometerData[kilometer].nonThermo += record.length;
         }
         
-        // Для второй таблицы - распределение ОСНОВНЫХ шпал по материалу
         if (record.material === 'do') {
           kilometerData[kilometer].zvenSleepers.wood += Math.ceil(record.mainSleepers);
         } else {
           kilometerData[kilometer].zvenSleepers.concrete += Math.ceil(record.mainSleepers);
         }
         
-        // Скрепление СБ
         if (record.material === 'sb') {
           kilometerData[kilometer].zvenSB += record.length;
         }
         
-        // Переводные брусья (отдельно)
         kilometerData[kilometer].zvenSwitchBeams += Math.ceil(record.switchSleepers);
       }
       
-      // Криволинейные участки (если радиус > 600 м)
-      if (record.sectionType === 'curved' && record.radius > 600) {
-        kilometerData[kilometer].curvedSections += record.length;
-      } else if (record.sectionType === 'mixed' && record.radius > 600) {
-        kilometerData[kilometer].curvedSections += record.curvedLength / 1000;
+      // ВАЖНОЕ ИСПРАВЛЕНИЕ: Учет криволинейных участков с радиусом > 600 м
+      if (record.sectionType === 'curved' || record.sectionType === 'mixed') {
+        const curvedLengthKm = calculateCurvedForTable(record);
+        kilometerData[kilometer].curvedSectionsR600 += curvedLengthKm;
       }
       
       // Участки с тонким балластом (< 30 см)
@@ -1329,6 +1331,7 @@
         let summaryHTML = `
           <p><strong>Общая протяженность:</strong> ${(data.totalLength * 1000).toFixed(0)} м (${data.totalLength.toFixed(3)} км)</p>
           <p><strong>Количество записей:</strong> ${data.records.length}</p>
+          <p><strong>Криволинейные участки R>600 м:</strong> ${data.curvedSectionsR600.toFixed(3)} км</p>
           <p><strong>Уравнительные пролеты:</strong> ${data.equalizingSpans} м</p>
           <p><strong>Старогодные (бесстыковой):</strong> ${data.oldTrackBes.toFixed(3)} км</p>
           <p><strong>Старогодные (звеньевой):</strong> ${data.oldTrackZven.toFixed(3)} км</p>
@@ -1345,7 +1348,6 @@
         summaryContent.innerHTML = summaryHTML;
         summarySection.style.display = "block";
 
-        // Прокручиваем к сводке
         summarySection.scrollIntoView({ behavior: 'smooth' });
       } else {
         alert("Нет данных для километража " + kilometer);
@@ -1357,10 +1359,8 @@
       const tableBody = document.getElementById("results-table-body");
       const tableFooter = document.getElementById("results-table-footer");
       
-      // Очищаем таблицу
       tableBody.innerHTML = '';
       
-      // Переменные для итогов
       let totalBesP65 = 0;
       let totalBesP50 = 0;
       let totalZvenP65 = 0;
@@ -1372,23 +1372,19 @@
       let totalOldTrackZven = 0;
       let totalNonThermo = 0;
 
-      // Добавляем записи в таблицу по километражу
       Object.keys(kilometerData).forEach(kilometer => {
         const data = kilometerData[kilometer];
         const row = document.createElement('tr');
         
-        // Данные для таблицы
         const besP65Length = data.besP65.length > 0 ? data.besP65.length.toFixed(3) : '';
         const besP50Length = data.besP50.length > 0 ? data.besP50.length.toFixed(3) : '';
         const zvenP65Length = data.zvenP65.length > 0 ? data.zvenP65.length.toFixed(3) : '';
         const zvenP50Length = data.zvenP50.length > 0 ? data.zvenP50.length.toFixed(3) : '';
 
-        // Для старогодных и нетермоупрочненных ставим прочерки, если значений нет
         const oldTrackBesDisplay = data.oldTrackBes > 0 ? data.oldTrackBes.toFixed(3) : '-';
         const oldTrackZvenDisplay = data.oldTrackZven > 0 ? data.oldTrackZven.toFixed(3) : '-';
         const nonThermoDisplay = data.nonThermo > 0 ? data.nonThermo.toFixed(3) : '-';
 
-        // Суммируем итоги
         totalBesP65 += data.besP65.length;
         totalBesP50 += data.besP50.length;
         totalZvenP65 += data.zvenP65.length;
@@ -1399,7 +1395,6 @@
         totalOldTrackZven += data.oldTrackZven;
         totalNonThermo += data.nonThermo;
 
-        // Проверяем T > 350 для первой укладки
         const hasT350 = data.records.some(r => r.T > 350);
         if (hasT350) {
           totalT350 += data.totalLength;
@@ -1408,39 +1403,39 @@
         row.innerHTML = `
           <td>${kilometer}</td>
           
-          <!-- Бесстыковой P65 - только протяженность -->
+          <!-- Бесстыковой P65 -->
           <td>${besP65Length}</td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
           
-          <!-- Бесстыковой P50 - только протяженность -->
+          <!-- Бесстыковой P50 -->
           <td>${besP50Length}</td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
           
-          <!-- Уравнительные пролеты и старогодные для бесстыкового -->
+          <!-- Уравнительные пролеты и старогодные -->
           <td>${(data.equalizingSpans / 1000).toFixed(3)}</td>
           <td>${oldTrackBesDisplay}</td>
           
-          <!-- Звеньевой P65 - только протяженность -->
+          <!-- Звеньевой P65 -->
           <td>${zvenP65Length}</td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
           
-          <!-- Звеньевой P50 - только протяженность -->
+          <!-- Звеньевой P50 -->
           <td>${zvenP50Length}</td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
           
-          <!-- Нетермоупрочненные и старогодные для звеньевого -->
+          <!-- Нетермоупрочненные и старогодные -->
           <td>${nonThermoDisplay}</td>
           <td>${oldTrackZvenDisplay}</td>
           
@@ -1452,56 +1447,38 @@
         tableBody.appendChild(row);
       });
 
-      // Для итогов также используем прочерки, если значений нет
       const totalOldTrackBesDisplay = totalOldTrackBes > 0 ? totalOldTrackBes.toFixed(3) : '-';
       const totalOldTrackZvenDisplay = totalOldTrackZven > 0 ? totalOldTrackZven.toFixed(3) : '-';
       const totalNonThermoDisplay = totalNonThermo > 0 ? totalNonThermo.toFixed(3) : '-';
 
-      // Обновляем итоги
       tableFooter.innerHTML = `
         <tr style="background-color: #e9ecef; font-weight: bold;">
           <td>ИТОГО:</td>
-          
-          <!-- Бесстыковой P65 -->
           <td>${totalBesP65.toFixed(3)}</td>
           <td colspan="4"></td>
-          
-          <!-- Бесстыковой P50 -->
           <td>${totalBesP50.toFixed(3)}</td>
           <td colspan="4"></td>
-          
-          <!-- Уравнительные пролеты и старогодные для бесстыкового -->
           <td>${(totalEqualizingSpans / 1000).toFixed(3)}</td>
           <td>${totalOldTrackBesDisplay}</td>
-          
-          <!-- Звеньевой P65 -->
           <td>${totalZvenP65.toFixed(3)}</td>
           <td colspan="4"></td>
-          
-          <!-- Звеньевой P50 -->
           <td>${totalZvenP50.toFixed(3)}</td>
           <td colspan="4"></td>
-          
-          <!-- Нетермоупрочненные и старогодные для звеньевого -->
           <td>${totalNonThermoDisplay}</td>
           <td>${totalOldTrackZvenDisplay}</td>
-          
-          <!-- Протяженность первой укладки и итого -->
           <td>${totalT350.toFixed(3)}</td>
           <td>${totalAll.toFixed(3)}</td>
         </tr>
       `;
     }
 
-    // Функция для обновления второй таблицы
+    // Функция для обновления второй таблицы (с криволинейными участками)
     function updateSecondTable() {
       const tableBody = document.getElementById("results-table-body-2");
       const tableFooter = document.getElementById("results-table-footer-2");
       
-      // Очищаем таблицу
       tableBody.innerHTML = '';
       
-      // Переменные для итогов
       let totalBesWood = 0;
       let totalBesConcrete = 0;
       let totalBesSB = 0;
@@ -1510,15 +1487,13 @@
       let totalZvenConcrete = 0;
       let totalZvenSB = 0;
       let totalZvenSwitch = 0;
-      let totalCurved = 0;
+      let totalCurvedR600 = 0; // Исправлено: только R>600 м
       let totalBallastThin = 0;
 
-      // Добавляем записи в таблицу по километражу
       Object.keys(kilometerData).forEach(kilometer => {
         const data = kilometerData[kilometer];
         const row = document.createElement('tr');
         
-        // Данные для таблицы
         const besWood = data.besSleepers.wood > 0 ? data.besSleepers.wood : '-';
         const besConcrete = data.besSleepers.concrete > 0 ? data.besSleepers.concrete : '-';
         const besSB = data.besSB > 0 ? data.besSB.toFixed(3) : '-';
@@ -1529,10 +1504,10 @@
         const zvenSB = data.zvenSB > 0 ? data.zvenSB.toFixed(3) : '-';
         const zvenSwitch = data.zvenSwitchBeams > 0 ? data.zvenSwitchBeams : '-';
         
-        const curved = data.curvedSections > 0 ? data.curvedSections.toFixed(3) : '-';
+        // ВАЖНО: Используем curvedSectionsR600 вместо curvedSections
+        const curvedR600 = data.curvedSectionsR600 > 0 ? data.curvedSectionsR600.toFixed(3) : '-';
         const ballastThin = data.ballastThin > 0 ? data.ballastThin.toFixed(3) : '-';
 
-        // Суммируем итоги
         totalBesWood += data.besSleepers.wood;
         totalBesConcrete += data.besSleepers.concrete;
         totalBesSB += data.besSB;
@@ -1541,7 +1516,7 @@
         totalZvenConcrete += data.zvenSleepers.concrete;
         totalZvenSB += data.zvenSB;
         totalZvenSwitch += data.zvenSwitchBeams;
-        totalCurved += data.curvedSections;
+        totalCurvedR600 += data.curvedSectionsR600; // Исправлено
         totalBallastThin += data.ballastThin;
 
         row.innerHTML = `
@@ -1583,45 +1558,31 @@
           <td>${zvenSB}</td>
           <td>${zvenSwitch}</td>
           
-          <!-- Криволинейные участки и забалластированные участки -->
-          <td>${curved}</td>
+          <!-- Криволинейные участки R>600 м и забалластированные участки -->
+          <td>${curvedR600}</td>
           <td>${ballastThin}</td>
         `;
         
         tableBody.appendChild(row);
       });
 
-      // Обновляем итоги
       tableFooter.innerHTML = `
         <tr style="background-color: #e9ecef; font-weight: bold;">
           <td>ИТОГО:</td>
-          
-          <!-- Бесстыковой путь: деревянные шпалы -->
           <td>${totalBesWood > 0 ? totalBesWood : '-'}</td>
           <td colspan="4"></td>
-          
-          <!-- Бесстыковой путь: железобетонные шпалы -->
           <td>${totalBesConcrete > 0 ? totalBesConcrete : '-'}</td>
           <td colspan="4"></td>
-          
-          <!-- Бесстыковой путь: скрепление СБ и переводные брусья -->
           <td>${totalBesSB > 0 ? totalBesSB.toFixed(3) : '-'}</td>
           <td>${totalBesSwitch > 0 ? totalBesSwitch : '-'}</td>
-          
-          <!-- Звеньевой путь: деревянные шпалы -->
           <td>${totalZvenWood > 0 ? totalZvenWood : '-'}</td>
           <td colspan="4"></td>
-          
-          <!-- Звеньевой путь: железобетонные шпалы -->
           <td>${totalZvenConcrete > 0 ? totalZvenConcrete : '-'}</td>
           <td colspan="4"></td>
-          
-          <!-- Звеньевой путь: скрепление СБ и переводные брусья -->
           <td>${totalZvenSB > 0 ? totalZvenSB.toFixed(3) : '-'}</td>
           <td>${totalZvenSwitch > 0 ? totalZvenSwitch : '-'}</td>
-          
-          <!-- Криволинейные участки и забалластированные участки -->
-          <td>${totalCurved > 0 ? totalCurved.toFixed(3) : '-'}</td>
+          <!-- Криволинейные участки R>600 м -->
+          <td>${totalCurvedR600 > 0 ? totalCurvedR600.toFixed(3) : '-'}</td>
           <td>${totalBallastThin > 0 ? totalBallastThin.toFixed(3) : '-'}</td>
         </tr>
       `;
@@ -1670,27 +1631,23 @@
       const end = parseFloat(endPoint.value);
       let isValid = true;
 
-      // Сбрасываем ошибки
       startPoint.classList.remove("error");
       endPoint.classList.remove("error");
       startPointError.style.display = "none";
       endPointError.style.display = "none";
 
-      // Проверка начала участка
       if (!isNaN(start) && (start < 0 || start > 999)) {
         startPoint.classList.add("error");
         startPointError.style.display = "block";
         isValid = false;
       }
 
-      // Проверка конца участка
       if (!isNaN(end) && (end < 0 || end > 1000)) {
         endPoint.classList.add("error");
         endPointError.style.display = "block";
         isValid = false;
       }
 
-      // Проверка что конец больше начала
       if (!isNaN(start) && !isNaN(end) && end <= start) {
         endPoint.classList.add("error");
         endPointError.textContent = "Конец участка должен быть больше начала";
@@ -1745,25 +1702,22 @@
       }
     }
 
-    // Функция для получения значения эпюра (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+    // Функция для получения значения эпюра
     function getEpureValue(epureType, isCurved, radius) {
       if (!isCurved) {
-        // Прямые участки
         return epureType === "1600_1840" ? 1600 : 1840;
       } else {
-        // Кривые участки - для обеих эпюр используется условие с радиусом 1200 м
         const isSmallRadius = radius <= 1200;
         
         if (epureType === "1840_2000") {
           return isSmallRadius ? 2000 : 1840;
         } else {
-          // "1600_1840" - для кривых с радиусом ≤ 1200м → 1840, для кривых > 1200м → 1600
           return isSmallRadius ? 1840 : 1600;
         }
       }
     }
 
-    // Функция для расчета основных шпал (с округлением в большую сторону)
+    // Функция для расчета основных шпал
     function calculateMainSleepers(length, epureValue) {
       if (length > 0 && epureValue > 0) {
         return Math.ceil((length * epureValue) / 1000);
@@ -1771,10 +1725,9 @@
       return 0;
     }
 
-    // Функция для расчета мостовых брусьев (для мостов типа Б и ББ, с округлением в большую сторону)
+    // Функция для расчета мостовых брусьев
     function calculateBridgeSleepers(bridgeType, bridgeLength) {
       if ((bridgeType === "B" || bridgeType === "BB") && bridgeLength > 0) {
-        // Для мостов всегда используется эпюра 2000
         return Math.ceil((bridgeLength * 2000) / 1000);
       }
       return 0;
@@ -1815,7 +1768,6 @@
         return;
       }
 
-      // Валидация кривого участка для комбинированного типа
       if (!validateCurvedSection()) {
         return;
       }
@@ -1838,7 +1790,6 @@
       const vnvsChoice = document.getElementById("vn_vs_choice").value;
       const toChecked = document.getElementById("to_checkbox").checked;
       
-      // Данные для кривого участка (только для комбинированного типа)
       const curvedStartVal = parseFloat(document.getElementById("curved_start").value) || 0;
       const curvedEndVal = parseFloat(document.getElementById("curved_end").value) || 0;
       const curvedLength = curvedEndVal - curvedStartVal;
@@ -1850,9 +1801,7 @@
       const UField = document.getElementById("U_value");
       const shpalCountField = document.getElementById("shpal_count");
 
-      // Проверка введенных данных
       if (!isNaN(year) && year >= 1900 && year <= 2025) {
-        // Для кривых участков проверяем радиус
         if (
           (sectionType === "curved" || sectionType === "mixed") &&
           (isNaN(radius) || radius <= 0)
@@ -1866,7 +1815,6 @@
         const deltaT = 2025 - year + 1;
         deltaField.value = deltaT;
 
-        // Расчет T
         let T;
         if (vnvsChoice === "vn") {
           T = deltaT * G;
@@ -1876,7 +1824,6 @@
 
         TField.value = T.toFixed(2);
 
-        // Расчет U
         let U;
         const isCurved = sectionType === "curved" || sectionType === "mixed";
         const isSmallRadius = isCurved && radius <= 650;
@@ -1889,7 +1836,6 @@
 
         UField.value = U ? U.toFixed(2) : "0.00";
 
-        // Расчеты для шпал
         let totalLength = 0;
         let effectiveLength = 0;
         let mainSleepers = 0;
@@ -1902,52 +1848,60 @@
         if (!isNaN(start) && !isNaN(end) && end >= start && validatePoints()) {
           totalLength = end - start;
           
-          // Расчет длины моста для эффективной длины
           let totalBridgeLength = 0;
           if (bridgeTypeVal !== "none" && !isNaN(bridgeStartVal) && !isNaN(bridgeEndVal) && bridgeEndVal >= bridgeStartVal) {
             totalBridgeLength = bridgeEndVal - bridgeStartVal;
           }
           
           const switchLength = calculateSwitchLength(switchCountVal, railType);
-          
-          // Эффективная длина (без мостов и стрелочных переводов)
           effectiveLength = calculateEffectiveLength(totalLength, totalBridgeLength, switchLength);
           
-          // Расчет основных шпал в зависимости от типа участка
+          // Расчет криволинейного участка для таблицы
+          let curvedForTable = 0;
+          if (radius > 600) {
+            if (sectionType === "curved") {
+              curvedForTable = totalLength / 1000;
+            } else if (sectionType === "mixed") {
+              curvedForTable = curvedLength / 1000;
+            }
+          }
+          
           if (sectionType === "mixed") {
-            // Комбинированный участок: отдельный расчет для прямой и кривой частей
             const mixedResult = calculateMixedSleepers(effectiveLength, curvedLength, epureType, radius);
             mainSleepers = mixedResult.totalSleepers;
             
-            // Формируем HTML для детального отображения расчета
             breakdownHTML = `
               <div class="section-breakdown">
-                <h5><i class="fas fa-calculator"></i> Детальный расчет для комбинированного участка</h5>
+                <h5><i class="fas fa-calculator"></i> Детальный расчет</h5>
                 <p><strong>Прямой участок:</strong> ${(effectiveLength - curvedLength).toFixed(1)} м × ${mixedResult.straightEpure} шт/км = ${mixedResult.straightSleepers} шт</p>
                 <p><strong>Кривой участок:</strong> ${curvedLength.toFixed(1)} м × ${mixedResult.curvedEpure} шт/км = ${mixedResult.curvedSleepers} шт</p>
+                <p><strong>Кривой участок для таблицы (R>600 м):</strong> ${curvedForTable.toFixed(3)} км</p>
                 <p><strong>Итого основных шпал:</strong> ${mixedResult.straightSleepers} + ${mixedResult.curvedSleepers} = ${mainSleepers} шт</p>
               </div>
             `;
           } else {
-            // Простой участок (прямой или кривой)
             const epureValue = getEpureValue(epureType, sectionType === "curved", radius);
             mainSleepers = calculateMainSleepers(effectiveLength, epureValue);
+            
+            if (sectionType === "curved" && radius > 600) {
+              breakdownHTML = `
+                <div class="section-breakdown">
+                  <h5><i class="fas fa-calculator"></i> Криволинейный участок</h5>
+                  <p><strong>Протяженность для таблицы (R>600 м):</strong> ${curvedForTable.toFixed(3)} км</p>
+                  <p><strong>Радиус:</strong> ${radius} м</p>
+                </div>
+              `;
+            }
           }
           
-          // Расчет мостовых брусьев (для мостов типа Б и ББ)
           bridgeSleepers = calculateBridgeSleepers(bridgeTypeVal, totalBridgeLength);
-          
-          // Расчет переводных брусьев
           switchSleepers = calculateSwitchSleepers(switchCountVal, railType, material);
-          
-          // Общее количество шпал
           totalSleepers = mainSleepers + bridgeSleepers + switchSleepers;
           ballastThickness = calculateBallastThickness(material);
         }
 
         shpalCountField.value = totalSleepers;
 
-        // Создаем запись для таблицы
         const record = {
           kilometer: kilometer,
           pathType: pathType,
@@ -1955,10 +1909,10 @@
           epureType: epureType,
           material: material,
           year: year,
-          length: totalLength / 1000, // в километрах
+          length: totalLength / 1000,
           T: T,
           vnvsChoice: vnvsChoice,
-          toChecked: toChecked, // Добавляем состояние галочки ТО
+          toChecked: toChecked,
           equalizingSpans: equalizingSpansVal,
           mainSleepers: mainSleepers,
           bridgeSleepers: bridgeSleepers,
@@ -1966,14 +1920,18 @@
           sectionType: sectionType,
           radius: radius,
           ballastThickness: ballastThickness,
-          effectiveLength: effectiveLength, // добавляем эффективную длину
-          curvedLength: curvedLength // добавляем длину кривого участка
+          effectiveLength: effectiveLength,
+          curvedLength: curvedLength,
+          curvedForTable: calculateCurvedForTable({
+            sectionType: sectionType,
+            radius: radius,
+            length: totalLength / 1000,
+            curvedLength: curvedLength
+          })
         };
 
-        // Добавляем запись в таблицу
         addToTable(record);
 
-        // Формирование результатов
         const pathTypeText = document.getElementById("path_type").options[document.getElementById("path_type").selectedIndex].text;
         const railTypeText = document.getElementById("rail_type").options[document.getElementById("rail_type").selectedIndex].text;
         const sectionTypeText = document.getElementById("section_type").options[document.getElementById("section_type").selectedIndex].text;
@@ -1996,6 +1954,18 @@
           curvedInfo = `<p>Длина кривого участка: <strong>${curvedLength.toFixed(0)} м</strong></p>`;
         }
         
+        // Информация о криволинейном участке для таблицы
+        let curvedTableInfo = "";
+        if (radius > 600 && (sectionType === "curved" || sectionType === "mixed")) {
+          const curvedKm = (sectionType === "curved" ? totalLength / 1000 : curvedLength / 1000).toFixed(3);
+          curvedTableInfo = `
+            <div class="curved-info">
+              <p><strong>Для таблицы:</strong> Криволинейный участок R>600 м</p>
+              <p>Протяженность для столбца "Протяженность криволинейных участков R>600 м, км": <strong>${curvedKm} км</strong></p>
+            </div>
+          `;
+        }
+        
         let bridgeInfo = "";
         let totalBridgeLength = 0;
         if (bridgeTypeVal !== "none" && !isNaN(bridgeStartVal) && !isNaN(bridgeEndVal) && bridgeEndVal >= bridgeStartVal) {
@@ -2007,7 +1977,6 @@
           <p>Уравнительные пролеты: <strong>${equalizingSpansVal} м</strong></p>
         `;
         
-        // Добавляем информацию о том, куда будут записаны данные ВС
         if (vnvsChoice === 'vs') {
           if (pathType === 'besstykovoy') {
             additionalInfo += `<p><strong>Данные будут записаны в столбец "из них старогодные" для бесстыкового пути</strong></p>`;
@@ -2016,14 +1985,12 @@
           }
         }
         
-        // Добавляем информацию о галочке ТО
         if (toChecked) {
           additionalInfo += `<p><strong>Галочка "ТО" включена - данные НЕ будут записаны в столбец "из них нетермоупрочненные"</strong></p>`;
         } else {
           additionalInfo += `<p><strong>Галочка "ТО" выключена - данные будут записаны в столбец "из них нетермоупрочненные"</strong></p>`;
         }
 
-        // Детальный расчет шпал
         let shpalDetails = "";
         if (totalLength > 0) {
           shpalDetails = `
@@ -2034,7 +2001,7 @@
             <p>• Мосты: ${totalBridgeLength} м</p>
             <p>• Стрелочные переводы: ${switchCountVal} шт</p>
             <p>• Эффективная длина: ${effectiveLength.toFixed(1)} м</p>
-            ${breakdownHTML || `<p>• Эпюра: ${getEpureValue(epureType, sectionType === "curved", radius)} шт/км</p>`}
+            ${breakdownHTML}
             
             <p><strong>Расчет:</strong></p>
             ${sectionType === "mixed" ? 
@@ -2053,6 +2020,7 @@
         ${kilometerInfo}
         ${lengthInfo}
         ${curvedInfo}
+        ${curvedTableInfo}
         ${bridgeInfo}
         ${additionalInfo}
         <p>Тип пути: <strong>${pathTypeText}</strong></p>
@@ -2096,10 +2064,8 @@
       const toCheckbox = document.getElementById("to_checkbox");
       const showResultsBtn = document.getElementById("show-results-always");
 
-      // **ИСПРАВЛЕНИЕ: Кнопка всегда доступна**
       showResultsBtn.addEventListener("click", showKilometerResults);
 
-      // Обработчик для выбора ВН/ВС
       vnvsChoice.addEventListener("change", function() {
         if (this.value === "vs") {
           vsNotice.style.display = "block";
@@ -2108,24 +2074,16 @@
         }
       });
 
-      // Обработчик для галочки ТО
-      toCheckbox.addEventListener("change", function() {
-        // Можно добавить дополнительную логику при изменении состояния галочки
-      });
-
-      // Инициализация полей моста
       toggleBridgeFields();
       bridgeType.addEventListener("change", toggleBridgeFields);
       document.getElementById("bridge_start").addEventListener("input", calculateBridgeLength);
       document.getElementById("bridge_end").addEventListener("input", calculateBridgeLength);
 
-      // Инициализация полей кривого участка
       toggleCurvedFields();
       toggleRadiusField();
       document.getElementById("curved_start").addEventListener("input", calculateCurvedLength);
       document.getElementById("curved_end").addEventListener("input", calculateCurvedLength);
 
-      // Обработчики изменения полей
       sectionType.addEventListener("change", function() {
         toggleRadiusField();
         toggleCurvedFields();
@@ -2139,10 +2097,8 @@
         calculateLength();
       });
 
-      // Обработка отправки формы
       form.addEventListener("submit", calculateAll);
 
-      // Добавляем интерактивность - изменение стиля при фокусе
       document.querySelectorAll(".form-control").forEach((input) => {
         input.addEventListener("focus", function () {
           this.style.borderColor = "var(--primary)";
